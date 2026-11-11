@@ -8,7 +8,7 @@ A standalone portal, with its own login, that tracks **what each student owes, w
 npm install
 npm run seed      # resets the DB and loads a Cohort 9 demo with deadlines relative to now
 npm start         # http://localhost:3000
-npm test          # rules-engine tests
+npm test          # rules-engine + end-to-end tests (31)
 ```
 
 You need Node 22.13 or later. It uses the built-in `node:sqlite`, so nothing has to compile.
@@ -58,6 +58,9 @@ The deadline used for reminders is `due_override_at` (approved extension, resubm
 Sample CSVs are in `samples/`.
 
 ## Configuration
+
+Copy `.env.example` to `.env` and fill it in. `npm start` reads it automatically. Check email with `npm run mail:test -- you@example.com`.
+
 
 | Env var | Default | |
 |---|---|---|
