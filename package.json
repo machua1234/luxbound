@@ -1,0 +1,22 @@
+{
+  "name": "luxbound",
+  "version": "0.1.0",
+  "description": "LuxDevHQ Progress & Support — student accountability portal",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "seed": "node scripts/seed.js",
+    "rules": "node scripts/run-rules.js",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "dependencies": {
+    "express": "^5.3.0",
+    "multer": "^2.5.0",
+    "nodemailer": "^10.5.0"
+  }
+}
