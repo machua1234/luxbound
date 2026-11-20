@@ -47,7 +47,7 @@ def main(argv=None):
         print("Seeded Cohort 9. Rules:", json.dumps(seed(), indent=2))
         print(f'\nSign in with password "{PASSWORD}":')
         print("  Cohort lead  lead@luxdevhq.test")
-        print("  Tutor        brian@luxdevhq.test  /  wanjiru@luxdevhq.test")
+        print("  Tutor        david@luxdevhq.test  /  wanjiru@luxdevhq.test")
         print("  Students     achieng@students.test, kevin@…, faith@…, daniel@…, grace@…, samuel@…, mercy@…, ian@students.test")
         return
     if args.cmd == "rules":

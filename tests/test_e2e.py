@@ -82,7 +82,7 @@ def ok(r, what):
 @pytest.fixture(scope="module")
 def users(app):
     out = {}
-    for name, email in [("lead", "lead@luxdevhq.test"), ("brian", "brian@luxdevhq.test"), ("wanjiru", "wanjiru@luxdevhq.test"),
+    for name, email in [("lead", "lead@luxdevhq.test"), ("david", "david@luxdevhq.test"), ("wanjiru", "wanjiru@luxdevhq.test"),
                         ("achieng", "achieng@students.test"), ("kevin", "kevin@students.test"), ("grace", "grace@students.test")]:
         out[name] = Client(app)
         out[name].login(email)
@@ -96,7 +96,7 @@ def test_auth_bad_password_and_role_home_pages(app, users):
     assert bad.headers["Location"].startswith("/login")
     assert anon.c.get_cookie("lp_session") is None
     assert users["lead"].get("/").headers["Location"] == "/overview"
-    assert users["brian"].get("/").headers["Location"] == "/queue"
+    assert users["david"].get("/").headers["Location"] == "/queue"
     assert users["achieng"].get("/").headers["Location"] == "/progress"
 
 
@@ -126,15 +126,15 @@ def test_every_page_renders_for_the_right_role(users):
     pages = {
         "lead": ["/overview", "/queue", "/queue?owner=all", "/students", "/assignments", "/support", "/support?status=all",
                  "/admin", "/admin/outbox", "/notifications", "/issues/1"],
-        "brian": ["/queue", "/students", "/assignments", "/support", "/notifications"],
+        "david": ["/queue", "/students", "/assignments", "/support", "/notifications"],
         "achieng": ["/progress", "/support", "/support/new", "/notifications"],
     }
     for who, paths in pages.items():
         for p in paths:
             assert users[who].get(p).status_code == 200, f"{who} {p}"
     a = q("SELECT id FROM assignments LIMIT 1")["id"]
-    assert users["brian"].get(f"/assignments/{a}").status_code == 200
-    assert users["brian"].get(f"/students/{user_id('kevin@students.test')}").status_code == 200
+    assert users["david"].get(f"/assignments/{a}").status_code == 200
+    assert users["david"].get(f"/students/{user_id('kevin@students.test')}").status_code == 200
 
 
 def test_privacy_students_and_tutors_only_see_what_they_should(users):
@@ -144,12 +144,12 @@ def test_privacy_students_and_tutors_only_see_what_they_should(users):
     assert users["achieng"].get(f"/progress/{sub_id('grace@students.test', 'W10-SQL')}").status_code == 404
     grace_ticket = q("SELECT id FROM tickets WHERE student_id = ?", grace)["id"]
     assert users["achieng"].get(f"/support/{grace_ticket}").status_code == 404
-    assert users["brian"].get("/overview").status_code == 403
-    assert users["brian"].get("/admin").status_code == 403
-    # Brian is not Grace's tutor and doesn't handle her tickets.
-    assert users["brian"].get(f"/students/{grace}").status_code == 404
-    assert users["brian"].get(f"/support/{grace_ticket}").status_code == 404
-    assert "Grace" not in text(users["brian"].get("/students"))
+    assert users["david"].get("/overview").status_code == 403
+    assert users["david"].get("/admin").status_code == 403
+    # David is not Grace's tutor and doesn't handle her tickets.
+    assert users["david"].get(f"/students/{grace}").status_code == 404
+    assert users["david"].get(f"/support/{grace_ticket}").status_code == 404
+    assert "Grace" not in text(users["david"].get("/students"))
 
 
 def test_post_without_csrf_token_is_refused(users):
@@ -171,8 +171,8 @@ def test_already_submitted_creates_verify_followup_then_tutor_confirms(users):
     ok(users["achieng"].post(f"/progress/{sid}/claim", {}, f"/progress/{sid}"), "claim")
     assert q("SELECT status FROM submissions WHERE id = ?", sid)["status"] == "student_claimed"
     assert q("SELECT 1 FROM followups WHERE kind = 'verify' AND status = 'open' AND rule_key LIKE ?", f"verify:{sid}:%")
-    assert "Student says submitted" in text(users["brian"].get("/queue"))
-    ok(users["brian"].post(f"/submissions/{sid}/status", {"status": "awaiting_review", "back": "/queue"}, "/queue"), "verify")
+    assert "Student says submitted" in text(users["david"].get("/queue"))
+    ok(users["david"].post(f"/submissions/{sid}/status", {"status": "awaiting_review", "back": "/queue"}, "/queue"), "verify")
     assert q("SELECT status FROM submissions WHERE id = ?", sid)["status"] == "awaiting_review"
     assert q("SELECT COUNT(*) n FROM followups WHERE kind = 'verify' AND status = 'open' AND rule_key LIKE ?", f"verify:{sid}:%")["n"] == 0
     assert "Awaiting tutor review" in text(users["achieng"].get(f"/progress/{sid}"))
@@ -187,7 +187,7 @@ def test_report_blocker_with_private_screenshot_reply_and_resolve(users):
     assert r.status_code == 302
     tid = int(r.headers["Location"].rsplit("/", 1)[1])
     t = q("SELECT * FROM tickets WHERE id = ?", tid)
-    assert t["assignee_id"] == user_id("brian@luxdevhq.test")
+    assert t["assignee_id"] == user_id("david@luxdevhq.test")
     assert t["assignment_id"] == aid
     assert t["screenshot"]
     assert users["achieng"].get(f"/uploads/{t['screenshot']}").status_code == 200
@@ -196,7 +196,7 @@ def test_report_blocker_with_private_screenshot_reply_and_resolve(users):
     bad = users["achieng"].upload("/support", {"skill": "Python", "trying_to_do": "", "tried": ""}, "/support/new")
     assert bad.headers["Location"] == "/support/new"
 
-    ok(users["brian"].post(f"/support/{tid}/reply", {"body": "Activate your venv first."}), "tutor reply")
+    ok(users["david"].post(f"/support/{tid}/reply", {"body": "Activate your venv first."}), "tutor reply")
     after = q("SELECT * FROM tickets WHERE id = ?", tid)
     assert after["status"] == "awaiting_student"
     assert after["first_reply_at"]
@@ -210,7 +210,7 @@ def test_report_blocker_with_private_screenshot_reply_and_resolve(users):
 
 def test_revision_request_lists_missing_deliverables_and_deadline(users):
     sid = sub_id("achieng@students.test", "P1")
-    ok(users["brian"].post(f"/submissions/{sid}/revision", {"items": "README with setup steps\nDashboard screenshot",
+    ok(users["david"].post(f"/submissions/{sid}/revision", {"items": "README with setup steps\nDashboard screenshot",
                                                            "due": "2026-12-20T23:59"}, f"/progress/{sid}"), "revision")
     s = q("SELECT * FROM submissions WHERE id = ?", sid)
     assert s["status"] == "revision_requested"
@@ -224,7 +224,7 @@ def test_revision_request_lists_missing_deliverables_and_deadline(users):
 
 def test_extension_changes_deadline_and_clears_overdue(users):
     sid = sub_id("achieng@students.test", "W10-SQL")
-    ok(users["brian"].post(f"/submissions/{sid}/extension", {"due": "2026-12-01T23:59", "note": "Family emergency"},
+    ok(users["david"].post(f"/submissions/{sid}/extension", {"due": "2026-12-01T23:59", "note": "Family emergency"},
                            f"/progress/{sid}"), "extension")
     s = q("SELECT * FROM submissions WHERE id = ?", sid)
     assert s["override_reason"] == "extension"
@@ -235,7 +235,7 @@ def test_extension_changes_deadline_and_clears_overdue(users):
 def test_bulk_confirm_from_squad_and_approve(users):
     aid = q("SELECT id FROM assignments WHERE code = 'W10-SQL'")["id"]
     daniel, faith = sub_id("daniel@students.test", "W10-SQL"), sub_id("faith@students.test", "W10-SQL")
-    b = users["brian"]
+    b = users["david"]
     r = b.c.post(f"/assignments/{aid}/bulk", data={"_csrf": b.csrf(f"/assignments/{aid}"), "status": "awaiting_review",
                                                   "ids": [str(daniel), str(faith)]})
     ok(r, "bulk")
@@ -261,29 +261,29 @@ def test_catch_up_plan_propose_agree_complete(users):
     kevin = user_id("kevin@students.test")
     assert q("SELECT 1 FROM followups WHERE kind = 'catch_up' AND student_id = ? AND status = 'open'", kevin), "flagged by rule"
     w09 = sub_id("kevin@students.test", "W09-CTE")
-    ok(users["brian"].post(f"/students/{kevin}/plan", {"plan": "Finish W09 first, then W10.", "check_in": "2026-11-16T10:00",
+    ok(users["david"].post(f"/students/{kevin}/plan", {"plan": "Finish W09 first, then W10.", "check_in": "2026-11-16T10:00",
                                                       f"due_{w09}": "2026-11-15T23:59"}, f"/students/{kevin}/plan"), "propose")
     plan = q("SELECT * FROM catchup_plans WHERE student_id = ?", kevin)
     assert plan["status"] == "proposed"
     assert q("SELECT override_reason FROM submissions WHERE id = ?", w09)["override_reason"] == "catch_up"
     assert q("SELECT COUNT(*) n FROM followups WHERE kind = 'catch_up' AND student_id = ? AND status = 'open'", kevin)["n"] == 0
     assert q("SELECT 1 FROM followups WHERE kind = 'check_in' AND plan_id = ? AND status = 'open'", plan["id"])
-    mail = q("SELECT * FROM outbox WHERE to_email = 'kevin@students.test' AND subject LIKE 'A catch-up plan from Brian%'")
+    mail = q("SELECT * FROM outbox WHERE to_email = 'kevin@students.test' AND subject LIKE 'A catch-up plan from David%'")
     assert "Let’s check in on" in mail["text"] and "Week 9 CTEs assignment" in mail["text"]
     assert "Review and agree" in text(users["kevin"].get("/progress"))
     ok(users["kevin"].post(f"/plans/{plan['id']}/agree", {}, f"/plans/{plan['id']}"), "agree")
     assert q("SELECT status FROM catchup_plans WHERE id = ?", plan["id"])["status"] == "agreed"
-    ok(users["brian"].post(f"/plans/{plan['id']}/complete", {}, f"/plans/{plan['id']}"), "complete")
+    ok(users["david"].post(f"/plans/{plan['id']}/complete", {}, f"/plans/{plan['id']}"), "complete")
     assert q("SELECT status FROM catchup_plans WHERE id = ?", plan["id"])["status"] == "completed"
     assert q("SELECT status FROM followups WHERE kind = 'check_in' AND plan_id = ?", plan["id"])["status"] == "done"
 
 
 def test_tutor_queue_followup_can_be_marked_done(users):
-    f = q("SELECT * FROM followups WHERE kind = 'catch_up' AND status = 'open' AND owner_id = ?", user_id("brian@luxdevhq.test"))
+    f = q("SELECT * FROM followups WHERE kind = 'catch_up' AND status = 'open' AND owner_id = ?", user_id("david@luxdevhq.test"))
     assert f, "Daniel catch-up still open"
-    page = text(users["brian"].get("/queue"))
+    page = text(users["david"].get("/queue"))
     assert "Next action" in page and "Propose plan" in page
-    ok(users["brian"].post(f"/followups/{f['id']}/done", {}, "/queue"), "done")
+    ok(users["david"].post(f"/followups/{f['id']}/done", {}, "/queue"), "done")
     assert q("SELECT status FROM followups WHERE id = ?", f["id"])["status"] == "done"
 
 
@@ -293,11 +293,11 @@ def test_lead_reassigns_flagged_ticket(users):
     lead = user_id("lead@luxdevhq.test")
     assert q("SELECT 1 FROM followups WHERE kind = 'ticket_sla' AND ticket_id = ? AND status = 'open' AND owner_id = ?", t["id"], lead)
     assert "Unanswered tickets" in text(users["lead"].get("/overview"))
-    brian = user_id("brian@luxdevhq.test")
-    ok(users["lead"].post(f"/support/{t['id']}/assign", {"assignee_id": str(brian)}), "reassign")
-    assert q("SELECT assignee_id FROM tickets WHERE id = ?", t["id"])["assignee_id"] == brian
+    david = user_id("david@luxdevhq.test")
+    ok(users["lead"].post(f"/support/{t['id']}/assign", {"assignee_id": str(david)}), "reassign")
+    assert q("SELECT assignee_id FROM tickets WHERE id = ?", t["id"])["assignee_id"] == david
     assert q("SELECT status FROM followups WHERE kind = 'ticket_sla' AND ticket_id = ?", t["id"])["status"] == "done"
-    assert q("SELECT 1 FROM notifications WHERE user_id = ? AND title LIKE ?", brian, f"Ticket #{t['id']} reassigned%")
+    assert q("SELECT 1 FROM notifications WHERE user_id = ? AND title LIKE ?", david, f"Ticket #{t['id']} reassigned%")
 
 
 def test_recurring_issue_fix_then_can_you_proceed(users):

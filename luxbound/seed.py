@@ -32,13 +32,13 @@ def seed() -> dict:
                    email, first, last, role, cohort_id, tutor_id, pw, ago(60 * DAY)).lastrowid
 
     user("lead@luxdevhq.test", "Amina", "Otieno", "lead")
-    brian = user("brian@luxdevhq.test", "Brian", "Kamau", "tutor")
+    david = user("david@luxdevhq.test", "David", "Mbogo", "tutor")
     wanjiru = user("wanjiru@luxdevhq.test", "Wanjiru", "Njeri", "tutor")
     S = {
-        "achieng": user("achieng@students.test", "Achieng", "Odhiambo", "student", brian),
-        "kevin": user("kevin@students.test", "Kevin", "Mwangi", "student", brian),
-        "faith": user("faith@students.test", "Faith", "Wambui", "student", brian),
-        "daniel": user("daniel@students.test", "Daniel", "Kiprop", "student", brian),
+        "achieng": user("achieng@students.test", "Achieng", "Odhiambo", "student", david),
+        "kevin": user("kevin@students.test", "Kevin", "Mwangi", "student", david),
+        "faith": user("faith@students.test", "Faith", "Wambui", "student", david),
+        "daniel": user("daniel@students.test", "Daniel", "Kiprop", "student", david),
         "grace": user("grace@students.test", "Grace", "Atieno", "student", wanjiru),
         "samuel": user("samuel@students.test", "Samuel", "Omondi", "student", wanjiru),
         "mercy": user("mercy@students.test", "Mercy", "Chebet", "student", wanjiru),
@@ -62,7 +62,7 @@ def seed() -> dict:
     ensure_submission_rows(cohort_id)
 
     def set_(student, a, status, **extra):
-        fields = {"status": status, "verified_by": brian, "verified_at": ago(2 * HOUR), "status_source": "tutor",
+        fields = {"status": status, "verified_by": david, "verified_at": ago(2 * HOUR), "status_source": "tutor",
                   "updated_at": now_iso()} | extra
         cols = ", ".join(f"{k} = ?" for k in fields)
         run(f"UPDATE submissions SET {cols} WHERE student_id = ? AND assignment_id = ?", *fields.values(), student, A[a])
@@ -76,7 +76,7 @@ def seed() -> dict:
     # Achieng: one confirmed overdue assignment, project unchecked, Python due tomorrow, and a ticket open.
     set_(S["achieng"], "w10", "outstanding")
     set_(S["achieng"], "p1", "not_checked", **unchecked)
-    # Kevin: two assignments overdue → catch-up flag for Brian.
+    # Kevin: two assignments overdue → catch-up flag for David.
     set_(S["kevin"], "w09", "outstanding")
     set_(S["kevin"], "w10", "outstanding")
     # Faith: revision requested with a resubmission deadline.
@@ -100,7 +100,7 @@ def seed() -> dict:
     copy_err = ('ERROR:  invalid input syntax for type date: "31/01/2024"\n'
                 'CONTEXT:  COPY sales, line 2, column order_date: "31/01/2024"')
     ticket(S["achieng"], "PostgreSQL imports", "w10", ago(2 * HOUR), "Import sales.csv into the sales table with \\copy for the Week 10 assignment.",
-           copy_err, "Re-saved the CSV as UTF-8 and checked the column order.", brian)
+           copy_err, "Re-saved the CSV as UTF-8 and checked the column order.", david)
     ticket(S["grace"], "PostgreSQL imports", "w10", ago(4 * DAY), "Load the orders CSV into PostgreSQL using pgAdmin’s import tool.",
            copy_err, "Changed the column type to text — it imports but then I can’t filter by date.", wanjiru)
     ticket(S["samuel"], "PostgreSQL imports", None, ago(5 * HOUR), "Running COPY from the course dataset.",

@@ -37,7 +37,7 @@ Demo password: `luxdev123`
 | Role | Email |
 |---|---|
 | Cohort lead | `lead@luxdevhq.test` |
-| Tutors | `brian@luxdevhq.test`, `wanjiru@luxdevhq.test` |
+| Tutors | `david@luxdevhq.test`, `wanjiru@luxdevhq.test` |
 | Students | `achieng@students.test` (overdue item, open ticket), `kevin@…` (2 overdue → catch-up), `faith@…` (revision), `daniel@…` (project overdue), `grace@…`, `samuel@…`, `mercy@…`, `ian@students.test` |
 
 ## Portal areas
