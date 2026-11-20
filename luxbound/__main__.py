@@ -67,6 +67,13 @@ def main(argv=None):
         print(f"Sent to {args.email}.")
         return
 
+    if os.environ.get("SEED_DEMO_IF_EMPTY", "").lower() == "true":
+        from .db import get
+        from .seed import seed
+
+        if not get("SELECT 1 FROM users LIMIT 1"):
+            print("Empty database: loading the Cohort 9 demo.", json.dumps(seed()), flush=True)
+
     port = int(os.environ.get("PORT") or 3000)
     host = os.environ.get("HOST") or "127.0.0.1"
     app = create_app()

@@ -4,6 +4,12 @@ A standalone portal, with its own login, that tracks **what each student owes, w
 
 Written in Python: Flask, SQLite, and the standard library for email and CSV.
 
+## Deploy (free demo on Render)
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/machua1234/luxbound)
+
+Uses `render.yaml`. The free plan has no persistent disk: the app sleeps after 15 minutes idle (the next visit takes about a minute), and the database resets on every restart or deploy, so it reloads the Cohort 9 demo automatically (`SEED_DEMO_IF_EMPTY`). For the real pilot, switch to a paid instance, add a disk, and set `DB_PATH` and `UPLOAD_DIR` to paths on the disk.
+
 ## Quick start
 
 ```bash

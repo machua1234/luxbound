@@ -7,7 +7,9 @@ from .timeutil import now_iso
 
 
 def portal_url() -> str:
-    return (os.environ.get("PORTAL_URL") or f"http://localhost:{os.environ.get('PORT', '3000')}").rstrip("/")
+    # RENDER_EXTERNAL_URL is set automatically on Render.
+    url = os.environ.get("PORTAL_URL") or os.environ.get("RENDER_EXTERNAL_URL")
+    return (url or f"http://localhost:{os.environ.get('PORT', '3000')}").rstrip("/")
 
 
 def _link_label(kind: str) -> str:

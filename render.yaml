@@ -1,0 +1,36 @@
+# Render Blueprint — one-click deploy of LuxDevHQ Progress & Support (free demo).
+# The free plan has no persistent disk: the database resets on every restart or deploy,
+# so SEED_DEMO_IF_EMPTY reloads the Cohort 9 demo data on start.
+services:
+  - type: web
+    name: luxbound
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m luxbound
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: SEED_DEMO_IF_EMPTY
+        value: "true"
+      - key: RULES_INTERVAL_MIN
+        value: "15"
+      # Optional: real email. Fill these in on Render's Environment page.
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_SECURE
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: MAIL_FROM
+        sync: false
