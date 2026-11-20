@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% set title = 'My Progress' %}
+{% macro section(name, items, empty_text) %}<div class="card"><h2>{{ name }}</h2>{% for s in items %}{% include "_item.html" %}{% else %}{{ empty(empty_text) }}{% endfor %}</div>{% endmacro %}
+{% block body %}
+<h1>Hi {{ g.user.first_name }}</h1>
+<p class="sub">Your required weekly assignments and projects. Submit everything in Squad — this page shows what’s still owed and what to do next.{% if tutor %} Your tutor is <b>{{ tutor.first_name }} {{ tutor.last_name }}</b>.{% endif %}</p>
+
+<div class="sbs">
+  <div><h3>Submission status</h3>
+    <div class="row">
+      {% set n = groups.action|length %}
+      {{ pill('bad' if any_overdue else ('warn' if n else 'good'), (n ~ ' need' ~ ('s' if n == 1 else '') ~ ' your attention') if n else 'Nothing needs attention') }}
+      <span class="muted">{{ submitted }} of {{ total }} submitted</span>
+    </div></div>
+  <div><h3>Support status</h3>
+    <div class="row">
+      {% for t in open_tickets[:3] %}<a href="/support/{{ t.id }}">#{{ t.id }} {{ t.skill }}</a> {{ ticket_pill(t) }}{% else %}<span class="muted">No open tickets.</span>{% endfor %}
+      <a class="btn sm ghost" href="/support/new">Report a blocker</a>
+    </div></div>
+</div>
+
+{% for p in plans %}
+<div class="card" style="border-color:#c7d2fe">
+  <h2>Catch-up plan from {{ p.tutor_first }} {{ pill('good', 'Agreed') if p.status == 'agreed' else pill('info', 'Proposed — please review') }}</h2>
+  <p>{{ p.plan|nl2br }}</p><p class="muted">Check-in: {{ p.check_in_at|fmt }}</p>
+  <a class="btn sm" href="/plans/{{ p.id }}">{{ 'Review and agree' if p.status == 'proposed' else 'View plan' }}</a>
+</div>
+{% endfor %}
+
+<div class="split">
+  <div>
+    {{ section('Needs your attention', groups.action, 'You’re all caught up.') }}
+    {{ section('Coming up', groups.upcoming, 'Nothing else scheduled yet.') }}
+  </div>
+  <div>
+    {{ section('With your tutor', groups.waiting, 'Nothing waiting for review.') }}
+    {{ section('Approved', groups.done, 'Nothing approved yet.') }}
+  </div>
+</div>
+{% endblock %}

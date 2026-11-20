@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% set title = 'Ticket #' ~ t.id %}
+{% block body %}
+<p><a href="/support">← Tickets</a></p>
+<h1>#{{ t.id }} · {{ t.skill }} {{ ticket_pill(t) }}</h1>
+<p class="sub">{% if staff %}<a href="/students/{{ t.student_id }}">{{ t.first_name }} {{ t.last_name }}</a> · {% endif %}Opened {{ t.created_at|fmt }} · Handled by {{ (assignee.first_name ~ ' ' ~ assignee.last_name) if assignee else 'unassigned' }}{% if t.escalated_at %} · <b style="color:var(--bad)">flagged to cohort lead {{ t.escalated_at|fmt }}</b>{% endif %}</p>
+
+<div class="sbs">
+  <div><h3>Support status</h3>{{ ticket_pill(t) }} <span class="muted">{{ ('waiting ' ~ waited(t.awaiting_since)) if t.status == 'awaiting_tutor' }}</span></div>
+  <div><h3>Submission status</h3>{% if t.assignment_title and sub %}<a href="/progress/{{ sub.id }}">{{ t.assignment_title }}</a>{% else %}<span class="muted">Not linked to an assignment.</span>{% endif %}</div>
+</div>
+
+{% if issue %}
+<div class="card" style="border-color:#fde68a;background:#fffbeb"><h2>Part of a recurring issue</h2>
+  <p>Several students reported the same <b>{{ issue.skill }}</b> problem. {{ 'A tutor is preparing a fix or walkthrough.' if issue.status == 'open' }}</p>
+  {% if issue.fix_text %}<div class="next info"><b>Shared fix · {{ issue.fix_shared_at|fmt }}</b>{{ issue.fix_text|nl2br }}</div>{% endif %}
+  {% if is_owner and issue.fix_text and t.status != 'resolved' %}
+  <p><b>Can you continue now?</b></p><div class="row">
+    <form method="post" action="/support/{{ t.id }}/proceed" class="inline">{{ csrf_field() }}<input type="hidden" name="answer" value="yes"><button class="btn good">Yes, I’m unblocked</button></form>
+    <form method="post" action="/support/{{ t.id }}/proceed" class="inline">{{ csrf_field() }}<input type="hidden" name="answer" value="no"><button class="btn ghost">No, still stuck</button></form></div>
+  {% endif %}
+  {% if t.can_proceed %}<p class="muted">Student answered: {{ 'can proceed' if t.can_proceed == 'yes' else 'still blocked' }}</p>{% endif %}
+  {% if staff %}<a href="/issues/{{ issue.id }}">Open the issue →</a>{% endif %}
+</div>
+{% endif %}
+
+<div class="thread">
+  <div class="msg"><div class="meta">{{ t.first_name }} {{ t.last_name }} · {{ t.created_at|fmt }}</div>
+    <h3>What I was trying to do</h3><p>{{ t.trying_to_do|nl2br }}</p>
+    {% if t.error_text %}<h3>Error</h3><pre class="err">{{ t.error_text }}</pre>{% endif %}
+    {% if t.screenshot %}<h3>Screenshot</h3><a href="/uploads/{{ t.screenshot }}" target="_blank"><img class="shot" src="/uploads/{{ t.screenshot }}" alt="Screenshot attached by student"></a>{% endif %}
+    <h3>What I tried</h3><p>{{ t.tried|nl2br }}</p></div>
+  {% for m in messages %}<div class="msg {{ 'staff' if m.role != 'student' }}"><div class="meta">{{ m.first_name }} {{ m.last_name }}{{ ' (staff)' if m.role != 'student' }} · {{ m.created_at|fmt }}</div>{{ m.body|nl2br }}</div>{% endfor %}
+</div>
+
+{% if t.status != 'resolved' %}
+<form class="card stack" method="post" action="/support/{{ t.id }}/reply">{{ csrf_field() }}
+  <label>{{ 'Reply to student' if staff else 'Add a reply' }}<textarea name="body" required></textarea></label>
+  <div class="form-actions"><button class="btn">Send reply</button></div></form>
+<form method="post" action="/support/{{ t.id }}/resolve" class="inline">{{ csrf_field() }}<button class="btn ghost">{{ 'My issue is solved — close ticket' if is_owner else 'Mark resolved' }}</button></form>
+{% else %}
+<p class="muted">Resolved {{ t.resolved_at|fmt }}. {% if is_owner %}Still stuck? <a href="/support/new">Open a new ticket</a>.{% endif %}</p>
+{% endif %}
+
+{% if tutors %}
+<form method="post" action="/support/{{ t.id }}/assign" class="card stack" style="margin-top:1.25rem">{{ csrf_field() }}<h3>Reassign (cohort lead)</h3>
+  <div class="row"><select name="assignee_id" style="max-width:300px">{% for u in tutors %}<option value="{{ u.id }}" {{ 'selected' if u.id == t.assignee_id }}>{{ u.first_name }} {{ u.last_name }} ({{ u.role }})</option>{% endfor %}</select><button class="btn sm">Reassign</button></div></form>
+{% endif %}
+{% endblock %}

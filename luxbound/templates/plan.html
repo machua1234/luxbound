@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% set title = 'Catch-up plan' %}
+{% block body %}
+<p><a href="{{ '/progress' if is_owner else '/students/' ~ p.student_id }}">← Back</a></p>
+<h1>Catch-up plan {{ pill('info' if p.status == 'proposed' else 'good', p.status|cap) }}</h1>
+<p class="sub">Proposed by {{ p.tutor_first }} {{ p.tutor_last }} on {{ p.created_at|fmt }}</p>
+<div class="card"><p>{{ p.plan|nl2br }}</p><p><b>Check-in:</b> {{ p.check_in_at|fmt }}</p>
+  {% if p.agreed_at %}<p class="muted">Agreed {{ p.agreed_at|fmt }}</p>{% endif %}
+  {% if is_owner and p.status == 'proposed' %}
+  <div class="row"><form method="post" action="/plans/{{ p.id }}/agree" class="inline">{{ csrf_field() }}<button class="btn good">Agree to this plan</button></form>
+    <a class="btn ghost" href="/support/new">Something needs to change</a></div>
+  {% endif %}
+  {% if not is_owner and p.status != 'completed' %}
+  <form method="post" action="/plans/{{ p.id }}/complete" class="inline">{{ csrf_field() }}<button class="btn ghost">Mark check-in done / plan complete</button></form>
+  {% endif %}
+</div>
+{% endblock %}

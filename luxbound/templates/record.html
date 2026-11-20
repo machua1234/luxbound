@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% set title = s.title %}
+{% block body %}
+<p><a href="{{ '/progress' if is_owner else '/students/' ~ s.student_id }}">← {{ 'My Progress' if is_owner else student.first_name ~ ' ' ~ student.last_name }}</a></p>
+<h1>{{ s.title }}</h1>
+<p class="sub">{{ 'Required project' if s.kind == 'project' else 'Required assignment' }}{% if s.week %} · Week {{ s.week }}{% endif %}{% if s.skill %} · {{ s.skill }}{% endif %}</p>
+
+<div class="sbs">
+  <div><h3>Submission status</h3>{{ pill(d.tone, d.label if is_owner else d.staff) }}
+    <p class="muted" style="margin:.5rem 0 0">Deadline used for reminders: <b>{{ d.due|fmt }}</b>
+    {% if s.due_override_at %}<br>Original deadline: {{ s.due_at|fmt }} ({{ s.override_reason }}){% endif %}</p></div>
+  <div><h3>Support status</h3>
+    {% for t in tickets %}<div><a href="/support/{{ t.id }}">#{{ t.id }} {{ t.skill }}</a> {{ ticket_pill(t) }}</div>{% else %}<span class="muted">No tickets linked to this assignment.</span>{% endfor %}</div>
+</div>
+
+<div class="next {{ d.tone }}"><b>What to do next</b>{{ next_step }}</div>
+
+{% if s.status == 'revision_requested' and missing %}
+<div class="card"><h2>Still missing</h2><ul>{% for x in missing %}<li>{{ x }}</li>{% endfor %}</ul></div>
+{% endif %}
+
+<div class="card">
+  <div class="row">
+    {% if s.squad_url %}<a class="btn" href="{{ s.squad_url }}" target="_blank" rel="noopener">Open in Squad ↗</a>{% endif %}
+    {% if can_claim %}<form method="post" action="/progress/{{ s.id }}/claim" class="inline">{{ csrf_field() }}<button class="btn ghost">I already submitted</button></form>{% endif %}
+    {% if is_owner and not d.done %}<a class="btn ghost" href="/support/new?assignment={{ s.assignment_id }}">Report a blocker</a>{% endif %}
+  </div>
+  <p class="muted" style="margin-bottom:0">Required: {{ what }}. Submit once, in Squad’s Project Lab.</p>
+  {% if s.student_note %}<p class="muted">Student’s note: “{{ s.student_note }}”</p>{% endif %}
+</div>
+
+{% if staff %}
+<div class="card"><h2>Update from Squad</h2>
+  <div class="row">
+    {% for st, label, cls in [('awaiting_review', 'Submitted — awaiting review', ''), ('outstanding', 'No submission', 'ghost'), ('approved', 'Approve', 'good')] %}
+    <form method="post" action="/submissions/{{ s.id }}/status" class="inline">{{ csrf_field() }}<input type="hidden" name="status" value="{{ st }}"><input type="hidden" name="back" value="/progress/{{ s.id }}"><button class="btn sm {{ cls }}" {{ 'disabled' if s.status == st }}>{{ label }}</button></form>
+    {% endfor %}
+  </div>
+  <div class="grid g2" style="margin-top:1rem">
+    <form method="post" action="/submissions/{{ s.id }}/revision" class="stack">{{ csrf_field() }}<h3>Request a revision</h3>
+      <label>Deliverables still missing <small>(one per line)</small><textarea name="items" required placeholder="README with setup steps&#10;Query for question 4"></textarea></label>
+      <label>Resubmission deadline (EAT)<input type="datetime-local" name="due" required></label>
+      <div class="form-actions"><button class="btn sm warn">Send revision request</button></div></form>
+    <form method="post" action="/submissions/{{ s.id }}/extension" class="stack">{{ csrf_field() }}<h3>Approve an extension</h3>
+      <label>New deadline (EAT)<input type="datetime-local" name="due" required></label>
+      <label>Note to student <small>(optional)</small><input type="text" name="note"></label>
+      <div class="form-actions"><button class="btn sm ghost">Approve extension</button></div></form>
+  </div>
+</div>
+{% endif %}
+
+<div class="grid g2">
+  <div class="card"><h2>History</h2>
+    {% if events %}<table>{% for e in events %}<tr><td>{{ e.created_at|fmt }}</td><td>{{ e.first_name or 'System' }}: {{ statuses.get(e.to_status, e.to_status) }}{% if e.note %}<br><small>{{ e.note }}</small>{% endif %}</td></tr>{% endfor %}</table>
+    {% else %}{{ empty('No changes recorded yet.') }}{% endif %}</div>
+  <div class="card"><h2>Notices sent</h2>
+    {% if notices %}<table>{% for n in notices %}<tr><td>{{ n.created_at|fmt }}</td><td>{{ n.title }}<br><small>Portal ✓ · Email: {{ n.email_status or 'pending' }}{% if n.emailed_at %} at {{ n.emailed_at|fmt }}{% endif %}</small></td></tr>{% endfor %}</table>
+    {% else %}{{ empty('No notices sent for this item.') }}{% endif %}</div>
+</div>
+{% endblock %}

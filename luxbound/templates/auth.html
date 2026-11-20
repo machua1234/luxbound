@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% set bare = true %}
+{% block title %}{{ {'login': 'Sign in', 'forgot': 'Reset password', 'set_password': 'Set your password', 'expired': 'Link expired'}[mode] }}{% endblock %}
+{% block body %}
+<div class="auth">
+  <section class="motion" aria-label="How the portal works">
+    <div class="orb a"></div><div class="orb b"></div>
+    <h2>Know what each student owes, what’s blocking them, and who acts next.</h2>
+    <p class="lede">Squad stays the LMS for classes, briefs and submissions. Progress & Support watches for early-warning signals and turns each one into a specific follow-up.</p>
+    <div class="flow">
+      {% for sig, act in scenes %}
+      <div class="scene"><div class="box sig"><b>Signal</b>{{ sig }}</div><div class="arrow"></div><div class="box act"><b>Follow-up</b>{{ act }}</div></div>
+      {% endfor %}
+    </div>
+    <div class="lanes"><span>My Progress</span><span>Technical Support</span><span>Tutor Queue</span><span>Cohort Overview</span></div>
+  </section>
+  <div class="panel">
+  {% if mode == 'login' %}
+    <form method="post" action="/login" class="stack">
+      {{ csrf_field() }}<input type="hidden" name="next" value="{{ next }}">
+      <h1>Sign in</h1><p class="sub">LuxDevHQ Progress & Support</p>
+      <label>Email<input type="email" name="email" required autofocus value="{{ email }}"></label>
+      <label>Password<input type="password" name="password" required></label>
+      <div class="form-actions"><button class="btn">Sign in</button><a class="btn ghost" href="/forgot">Forgot password</a></div>
+      {% if show_demo %}<div class="demo">Demo accounts (password <code>luxdev123</code>):<br>
+        <code>lead@luxdevhq.test</code> · <code>brian@luxdevhq.test</code> (tutor) · <code>achieng@students.test</code> (student)</div>{% endif %}
+    </form>
+  {% elif mode == 'forgot' %}
+    <form method="post" action="/forgot" class="stack">
+      {{ csrf_field() }}<h1>Reset your password</h1><p class="sub">We’ll email you a link.</p>
+      <label>Email<input type="email" name="email" required autofocus></label>
+      <div class="form-actions"><button class="btn">Send link</button><a class="btn ghost" href="/login">Back</a></div>
+    </form>
+  {% elif mode == 'set_password' %}
+    <form method="post" action="/set-password" class="stack">
+      {{ csrf_field() }}<input type="hidden" name="token" value="{{ token }}">
+      <h1>Welcome, {{ user.first_name }}</h1><p class="sub">Choose a password for {{ user.email }}.</p>
+      <label>New password <small>(at least 8 characters)</small><input type="password" name="password" minlength="8" required autofocus></label>
+      <div class="form-actions"><button class="btn">Save and sign in</button></div>
+    </form>
+  {% else %}
+    <div><h1>This link has expired</h1><p class="sub">Ask for a new one.</p><a class="btn" href="/forgot">Send a new link</a></div>
+  {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% set title = name %}
+{% block body %}
+<p><a href="/students">← Students</a></p>
+<div class="row" style="justify-content:space-between"><div><h1>{{ name }}</h1>
+  <p class="sub">{{ s.email }} · Tutor: {{ (s.tutor_first ~ ' ' ~ s.tutor_last) if s.tutor_first else 'not assigned' }}</p></div>
+  <div class="row">{% if any_overdue %}<a class="btn warn" href="/students/{{ s.id }}/plan">Propose catch-up plan</a>{% endif %}</div></div>
+
+{% if followups %}<div class="card" style="border-color:#fecaca"><h2>Open follow-ups</h2><table>{% for f in followups %}<tr><td>{{ f.next_action }}</td><td>{{ f.owner_first }}</td><td>{{ due(f.due_at, at) }}</td></tr>{% endfor %}</table></div>{% endif %}
+
+<div class="split">
+  <div class="card"><h2>Submission status</h2>
+    <table><tr><th>Item</th><th>Deadline</th><th>Status</th></tr>{% for x in subs %}<tr>
+      <td><a href="/progress/{{ x.id }}">{{ x.title }}</a>{% if x.kind == 'project' %} <span class="tag">Project</span>{% endif %}</td>
+      <td>{{ x.d.due|fmt }}{% if x.due_override_at %}<br><small>{{ x.override_reason }}</small>{% endif %}</td><td>{{ pill(x.d.tone, x.d.staff) }}</td></tr>{% endfor %}</table></div>
+  <div>
+    <div class="card"><h2>Support status</h2>{% if tickets %}<table>{% for t in tickets %}<tr><td><a href="/support/{{ t.id }}">#{{ t.id }} {{ t.skill }}</a>{% if t.assignment_title %}<br><small>{{ t.assignment_title }}</small>{% endif %}</td><td>{{ ticket_pill(t) }}</td></tr>{% endfor %}</table>{% else %}{{ empty('No tickets.') }}{% endif %}</div>
+    <div class="card"><h2>Catch-up plans</h2>{% for p in plans %}<p><a href="/plans/{{ p.id }}">{{ p.created_at|fmt }}</a> {{ pill('info' if p.status == 'proposed' else 'good', p.status) }}<br><small>Check-in {{ p.check_in_at|fmt }}</small></p>{% else %}{{ empty('None.') }}{% endfor %}</div>
+    {% if tutors %}<form class="card stack" method="post" action="/students/{{ s.id }}/tutor">{{ csrf_field() }}<h2>Assigned tutor</h2>
+      <div class="row"><select name="tutor_id" style="max-width:220px"><option value="">—</option>{% for t in tutors %}<option value="{{ t.id }}" {{ 'selected' if t.id == s.tutor_id }}>{{ t.first_name }} {{ t.last_name }}</option>{% endfor %}</select><button class="btn sm">Save</button></div></form>{% endif %}
+    <div class="card"><h2>Recent notices</h2>{% if notices %}<table>{% for n in notices %}<tr><td><small>{{ n.created_at|fmt }}</small><br>{{ n.title }}<br><small>Email: {{ n.email_status or '—' }}</small></td></tr>{% endfor %}</table>{% else %}{{ empty('None sent.') }}{% endif %}</div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% set title = 'Report a blocker' %}
+{% block body %}
+<p><a href="/support">← Technical Support</a></p>
+<h1>Report a blocker</h1><p class="sub">The more specific you are, the faster your tutor can help. Only you and the staff supporting you can see this.</p>
+<form class="card stack" method="post" action="/support" enctype="multipart/form-data" style="max-width:760px">
+  {{ csrf_field() }}
+  <label>Which skill is this about?<select name="skill" required>{% for s in skills %}<option {{ 'selected' if s == pre_skill }}>{{ s }}</option>{% endfor %}</select></label>
+  <label>Affected assignment <small>(if there is one)</small><select name="assignment_id"><option value="">None / not sure</option>{% for a in assignments %}<option value="{{ a.id }}" {{ 'selected' if a.id == pre }}>{{ a.title }}</option>{% endfor %}</select></label>
+  <label>What were you trying to do?<textarea name="trying_to_do" required placeholder="e.g. Import the sales CSV into PostgreSQL with \copy"></textarea></label>
+  <label>Paste the error message <small>(exactly as shown)</small><textarea name="error_text" class="code" placeholder='ERROR:  invalid input syntax for type date: "31/01/2024"'></textarea></label>
+  <label>Screenshot <small>(optional — PNG/JPG, max 5 MB)</small><input type="file" name="screenshot" accept="image/*"></label>
+  <label>What have you tried so far?<textarea name="tried" required placeholder="e.g. Changed DateStyle, re-saved the CSV as UTF-8…"></textarea></label>
+  <div class="form-actions"><button class="btn">Send to my tutor</button><a class="btn ghost" href="/support">Cancel</a></div>
+</form>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% set title = 'Technical Support' %}
+{% block body %}
+<div class="row" style="justify-content:space-between"><div><h1>{{ 'Support tickets' if staff else 'Technical Support' }}</h1>
+  <p class="sub">{{ 'Tickets for your students and tickets assigned to you.' if staff else 'Stuck on something technical? Tell us what you were trying to do and what happened. Your tutor will reply within one working day.' }}</p></div>
+  {% if not staff %}<a class="btn" href="/support/new">Report a blocker</a>{% endif %}</div>
+<div class="row" style="margin-bottom:1rem">{% for key, label in filters %}<a class="btn sm {{ '' if status == key else 'ghost' }}" href="?status={{ key }}">{{ label }}</a>{% endfor %}</div>
+<div class="card">
+{% if tickets %}
+<table><tr><th>#</th>{% if staff %}<th>Student</th>{% endif %}<th>Skill</th><th>Trying to</th><th>Assignment</th><th>Status</th><th>Waiting</th></tr>
+{% for t in tickets %}<tr><td><a href="/support/{{ t.id }}">#{{ t.id }}</a></td>{% if staff %}<td>{{ t.first_name }} {{ t.last_name }}</td>{% endif %}
+  <td>{{ t.skill }}{% if t.issue_id and staff %} <a class="tag" href="/issues/{{ t.issue_id }}">recurring</a>{% elif t.issue_id %} <span class="tag">recurring</span>{% endif %}</td>
+  <td><a href="/support/{{ t.id }}">{{ t.trying_to_do|truncate(80, true, '…', 0) }}</a></td>
+  <td>{{ t.assignment_title or '—' }}</td><td>{{ ticket_pill(t) }}</td>
+  <td>{{ '' if t.status == 'resolved' else waited(t.awaiting_since, at) }}</td></tr>{% endfor %}
+</table>
+{% else %}{{ empty('No tickets here.') }}{% endif %}
+</div>
+{% endblock %}

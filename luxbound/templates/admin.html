@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% set title = 'Admin' %}
+{% macro cohort_select() %}<label>Cohort<select name="cohort_id">{% for c in cohorts %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select></label>{% endmacro %}
+{% block body %}
+<h1>Admin</h1>
+<p class="sub">Pilot setup: import the weekly roster and assignments, then tutors confirm status from Squad. Email transport: <b>{{ 'SMTP (live)' if transport == 'smtp' else 'outbox only — set SMTP_HOST in .env to send' }}</b>.</p>
+<div class="grid g3">
+  <form class="card stack" method="post" action="/admin/import/roster" enctype="multipart/form-data">{{ csrf_field() }}
+    <h2>1 · Weekly roster</h2><p class="muted">CSV: <code>email, first_name, last_name, tutor_email, role</code>. New people get an invite email.</p>
+    {{ cohort_select() }}<label>Or new cohort name<input type="text" name="new_cohort" placeholder="Cohort 10"></label>
+    <label>File<input type="file" name="file" accept=".csv,text/csv" required></label>
+    <label><input type="checkbox" name="deactivate_missing" value="1" style="width:auto"> Deactivate students not in this file</label>
+    <div class="form-actions"><button class="btn">Import roster</button></div><a href="/static/samples/roster.csv">Sample file</a></form>
+  <form class="card stack" method="post" action="/admin/import/assignments" enctype="multipart/form-data">{{ csrf_field() }}
+    <h2>2 · Assignments</h2><p class="muted">CSV: <code>code, title, week, kind, skill, required, due_at, squad_url, deliverables</code>. Dates in EAT (<code>2026-11-14 23:59</code>). Matched by code.</p>
+    {{ cohort_select() }}<label>File<input type="file" name="file" accept=".csv,text/csv" required></label>
+    <div class="form-actions"><button class="btn">Import assignments</button></div><a href="/static/samples/assignments.csv">Sample file</a></form>
+  <form class="card stack" method="post" action="/admin/import/status" enctype="multipart/form-data">{{ csrf_field() }}
+    <h2>3 · Squad status export <small class="muted">(later)</small></h2><p class="muted">Use only once Squad provides a reliable export. CSV: <code>email, assignment_code, status</code> where status is <code>submitted</code>, <code>not_submitted</code>, <code>approved</code>.</p>
+    {{ cohort_select() }}<label>File<input type="file" name="file" accept=".csv,text/csv" required></label>
+    <div class="form-actions"><button class="btn ghost">Import statuses</button></div><a href="/static/samples/status.csv">Sample file</a></form>
+</div>
+
+<div class="grid g2">
+  <div class="card"><div class="row" style="justify-content:space-between"><h2>Early-warning rules</h2>
+    <form method="post" action="/admin/rules/run" class="inline">{{ csrf_field() }}<button class="btn sm">Run now</button></form></div>
+    <p class="muted">Rules run automatically every {{ interval }} minutes and after every status update. Each notice is sent once.</p>
+    {% if runs %}<table>{% for r in runs %}<tr><td><small>{{ r.started_at|fmt }}</small></td><td><small>{{ r.parts }}</small></td></tr>{% endfor %}</table>{% endif %}</div>
+  <div class="card"><h2>Recent imports</h2>{% if imports %}<table>{% for i in imports %}<tr><td><small>{{ i.created_at|fmt }}</small></td><td>{{ i.kind }}{% if i.filename %} · {{ i.filename }}{% endif %}</td><td>+{{ i.created }} / ~{{ i.updated }}{% if i.errors %}<br><small style="color:var(--bad)">{{ i.errors }}</small>{% endif %}</td></tr>{% endfor %}</table>{% else %}{{ empty('No imports yet.') }}{% endif %}</div>
+</div>
+
+<div class="grid g2">
+  <div class="card"><h2>Staff</h2><table>{% for s in staff %}<tr><td>{{ s.first_name }} {{ s.last_name }}</td><td>{{ s.email }}</td><td>{{ s.role }}</td></tr>{% endfor %}</table>
+    <form class="stack" method="post" action="/admin/staff">{{ csrf_field() }}<h3 style="margin-top:1rem">Add staff</h3>
+      <div class="grid g2"><input type="text" name="first_name" placeholder="First name" required><input type="text" name="last_name" placeholder="Last name"></div>
+      <div class="grid g2" style="margin-top:.5rem"><input type="email" name="email" placeholder="Email" required><select name="role"><option value="tutor">Tutor</option><option value="lead">Cohort lead</option></select></div>
+      <div class="form-actions"><button class="btn sm">Invite</button></div></form></div>
+  <div class="card"><h2>Email outbox</h2><p class="muted">Every email the portal has sent, with the time it was sent. Invite and reset links are here too.</p><a class="btn sm ghost" href="/admin/outbox">Open outbox</a></div>
+</div>
+{% endblock %}

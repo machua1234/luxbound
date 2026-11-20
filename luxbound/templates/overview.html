@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% set title = 'Cohort Overview' %}
+{% block body %}
+{% if not cohort %}
+<h1>Cohort Overview</h1><p class="sub">No cohort yet. <a href="/admin">Import a roster</a> to get started.</p>
+{% else %}
+<div class="row" style="justify-content:space-between"><div><h1>{{ cohort.name }} overview</h1>
+  <p class="sub">{{ students }} active students · rules last ran {{ relative(last_run.started_at, at) if last_run else 'never' }}</p></div>
+  {% if cohorts|length > 1 %}<form class="row"><select name="cohort" onchange="this.form.submit()" style="width:auto">{% for c in cohorts %}<option value="{{ c.id }}" {{ 'selected' if c.id == cohort.id }}>{{ c.name }}</option>{% endfor %}</select></form>{% endif %}</div>
+
+<div class="stats">
+  {{ stat('Completion rate', completion, '', completed ~ ' of ' ~ past_due ~ ' due items submitted') }}
+  {{ stat('Overdue (confirmed)', overdue|length, 'bad' if overdue else 'good', overdue_students ~ ' students') }}
+  {{ stat('Awaiting verification', unverified|length, 'warn' if unverified else '', 'past deadline, not checked') }}
+  {{ stat('Unanswered tickets', unanswered|length, 'bad' if flagged else ('warn' if unanswered else 'good'), flagged ~ ' past one working day') }}
+  {{ stat('Late follow-ups', late_followups|length, 'bad' if late_followups else 'good', 'past their due date') }}
+</div>
+
+<div class="card"><h2>Completion by assignment</h2>
+  <table><tr><th>Item</th><th>Deadline</th><th>Submitted</th><th>Approved</th><th>Overdue</th><th>Unverified</th></tr>
+  {% for p in per_assignment %}<tr><td><a href="/assignments/{{ p.a.id }}">{{ p.a.title }}</a>{% if p.a.kind == 'project' %} <span class="tag">Project</span>{% endif %}</td><td>{{ p.a.due_at|fmt }}</td>
+    <td>{{ bar(p.done, p.total) }}<small>{{ p.done }}/{{ p.total }}</small></td><td>{{ p.approved }}</td>
+    <td>{{ pill('bad', p.overdue) if p.overdue else '0' }}</td><td>{{ pill('warn', p.unverified) if p.unverified else '0' }}</td></tr>{% endfor %}
+  </table></div>
+
+<div class="grid g2">
+  <div class="card"><h2>Recurring issues by skill <small class="muted">(last 30 days)</small></h2>
+    {% if issues %}<div style="margin-bottom:1rem">{% for i in issues %}<div class="next warn"><b>{{ 'Needs a fix' if i.status == 'open' else 'Fix shared — checking students can proceed' }}</b><a href="/issues/{{ i.id }}">{{ i.title }}</a> · {{ i.n }} tickets · owner {{ i.owner_first or '—' }}</div>{% endfor %}</div>{% endif %}
+    {% if skills %}<table><tr><th>Skill</th><th>Students</th><th>Tickets</th><th>Open</th><th>Avg first reply</th></tr>{% for s in skills %}<tr><td>{{ s.skill }}</td>
+      <td>{{ pill('warn', s.students) if s.students >= threshold else s.students }}</td><td>{{ s.total }}</td><td>{{ s.open }}</td><td>{{ ('%.1f h'|format(s.avg_reply_h)) if s.avg_reply_h is not none else '—' }}</td></tr>{% endfor %}</table>
+    {% else %}{{ empty('No tickets in the last 30 days.') }}{% endif %}</div>
+  <div class="card"><h2>Unanswered tickets</h2>
+    {% if unanswered %}<table><tr><th>#</th><th>Student</th><th>Skill</th><th>Tutor</th><th>Waiting</th></tr>{% for t in unanswered %}<tr><td><a href="/support/{{ t.id }}">#{{ t.id }}</a></td>
+      <td>{{ t.first_name }} {{ t.last_name }}</td><td>{{ t.skill }}</td><td>{{ t.assignee_first or '—' }}</td><td>{{ pill('bad', waited(t.awaiting_since, at)) if t.escalated_at else waited(t.awaiting_since, at) }}</td></tr>{% endfor %}</table>
+    {% else %}{{ empty('Every ticket has a reply.') }}{% endif %}</div>
+</div>
+
+<div class="grid g2">
+  <div class="card"><h2>Students with overdue work</h2>{% if at_risk %}<table>{% for s in at_risk %}<tr><td><a href="/students/{{ s.id }}">{{ s.first_name }} {{ s.last_name }}</a></td><td>{{ pill('bad', s.n ~ ' overdue') }}</td></tr>{% endfor %}</table>{% else %}{{ empty('No confirmed overdue work.') }}{% endif %}</div>
+  <div class="card"><h2>Follow-ups past due</h2>{% if late_followups %}<table>{% for f in late_followups %}<tr><td>{{ f.next_action }}</td><td>{{ f.owner_first }}</td><td>{{ pill('bad', f.due_at|fmt) }}</td></tr>{% endfor %}</table>{% else %}{{ empty('All follow-ups are on time.') }}{% endif %}</div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% set title = 'Issue: ' ~ issue.skill %}
+{% block body %}
+<p><a href="/queue">← Queue</a></p>
+<h1>{{ issue.title }} {{ pill({'open': 'warn', 'fix_shared': 'info', 'resolved': 'good'}[issue.status], {'open': 'Needs a fix', 'fix_shared': 'Fix shared', 'resolved': 'Resolved'}[issue.status]) }}</h1>
+<p class="sub">Owner: {{ issue.owner_first or '—' }} · Detected {{ issue.created_at|fmt }}</p>
+<div class="split">
+  <div class="card"><h2>Affected students ({{ tickets|length }})</h2>
+    <table><tr><th>Ticket</th><th>Student</th><th>Status</th><th>Can proceed?</th></tr>
+    {% for t in tickets %}<tr><td><a href="/support/{{ t.id }}">#{{ t.id }}</a></td><td>{{ t.first_name }} {{ t.last_name }}</td><td>{{ ticket_pill(t) }}</td>
+      <td>{% if t.can_proceed == 'yes' %}{{ pill('good', 'Yes') }}{% elif t.can_proceed == 'no' %}{{ pill('bad', 'Still blocked') }}{% elif issue.fix_text %}{{ pill('neutral', 'Not answered') }}{% else %}—{% endif %}</td></tr>{% endfor %}
+    </table>
+    {% if issue.fix_text %}<p class="muted">{{ answered }} of {{ tickets|length }} have answered.</p>{% endif %}</div>
+  <div>
+  {% if issue.status != 'resolved' %}
+    <form class="card stack" method="post" action="/issues/{{ issue.id }}/fix">{{ csrf_field() }}
+      <h2>{{ 'Update the shared fix' if issue.fix_text else 'Share a fix or walkthrough' }}</h2>
+      <p class="muted">Every affected student gets it by email and in the portal, with a “Can you proceed?” check.</p>
+      <label>Fix / walkthrough details<textarea name="fix_text" required rows="8" placeholder="Steps, a snippet, or the walkthrough time and link">{{ issue.fix_text or '' }}</textarea></label>
+      <div class="form-actions"><button class="btn">Send to {{ open_count }} students</button></div></form>
+    <form method="post" action="/issues/{{ issue.id }}/resolve" class="inline">{{ csrf_field() }}<button class="btn ghost">Close issue</button></form>
+  {% else %}
+    <div class="card"><h2>Shared fix</h2><p>{{ (issue.fix_text or '—')|nl2br }}</p></div>
+  {% endif %}
+  </div>
+</div>
+{% endblock %}

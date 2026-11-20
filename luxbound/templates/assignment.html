@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% set title = a.title %}
+{% block body %}
+<p><a href="/assignments">← Assignments</a></p>
+<h1>{{ a.title }}</h1>
+<p class="sub">{{ 'Project' if a.kind == 'project' else 'Assignment' }} · {{ a.skill }} · Due {{ a.due_at|fmt }} · Deliverables: {{ a.deliverables or '—' }}{% if a.squad_url %} · <a href="{{ a.squad_url }}" target="_blank" rel="noopener">Open in Squad ↗</a>{% endif %}</p>
+<form class="card" method="post" action="/assignments/{{ a.id }}/bulk">{{ csrf_field() }}
+  <div class="row" style="justify-content:space-between;margin-bottom:.75rem"><h2 style="margin:0">Confirm status from Squad</h2>
+    <div class="row"><select name="status" style="width:auto">{% for st in bulk_options %}<option value="{{ st }}">{{ statuses[st] }}</option>{% endfor %}</select>
+    <button class="btn sm">Apply to selected</button></div></div>
+  {% if subs %}
+  <table><tr><th><input type="checkbox" aria-label="Select all" onclick="document.querySelectorAll('.pick').forEach(c=>c.checked=this.checked)"></th><th>Student</th><th>Deadline</th><th>Status</th><th>Last checked</th></tr>
+  {% for s in subs %}<tr><td><input class="pick" type="checkbox" name="ids" value="{{ s.id }}"></td>
+    <td><a href="/progress/{{ s.id }}">{{ s.first_name }} {{ s.last_name }}</a>{% if s.student_note %}<br><small>“{{ s.student_note }}”</small>{% endif %}</td>
+    <td>{{ s.d.due|fmt }}{% if s.due_override_at %}<br><small>{{ s.override_reason }}</small>{% endif %}</td><td>{{ pill(s.d.tone, s.d.staff) }}</td>
+    <td><small>{{ relative(s.verified_at, at) if s.verified_at else 'never' }}</small></td></tr>{% endfor %}
+  </table>
+  {% else %}{{ empty('No students in scope.') }}{% endif %}
+</form>
+{% endblock %}

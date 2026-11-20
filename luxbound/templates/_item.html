@@ -1,0 +1,8 @@
+{# One submission row. Expects: s (with s.d), at, staff_view #}
+<div class="item">
+  <div>
+    <div class="t"><a href="/progress/{{ s.id }}">{{ s.title }}</a>{% if s.kind == 'project' %} <span class="tag">Project</span>{% endif %}{% if not s.required %} <span class="tag">Optional</span>{% endif %}</div>
+    <div class="m">Due {{ due(s.d.due, at) }}{% if s.override_reason %} · <b>{{ 'resubmission deadline' if s.override_reason == 'resubmission' else 'extended' }}</b>{% endif %} · {{ s.what }}</div>
+  </div>
+  <div>{{ pill(s.d.tone, s.d.staff if staff_view else s.d.label) }}</div>
+</div>

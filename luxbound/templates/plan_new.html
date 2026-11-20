@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% set title = 'Propose catch-up plan' %}
+{% block body %}
+<p><a href="/students/{{ s.id }}">← {{ name }}</a></p>
+<h1>Catch-up plan for {{ s.first_name }}</h1>
+<p class="sub">Agree what happens next. {{ s.first_name }} gets this as a private message from you, with the check-in date.</p>
+<form class="card stack" method="post" action="/students/{{ s.id }}/plan" style="max-width:820px">{{ csrf_field() }}
+  <label>Plan <small>(written to {{ s.first_name }})</small><textarea name="plan" required rows="6">Let’s get you back on track. Focus on one item at a time, starting with the oldest. If anything technical blocks you, open a ticket straight away rather than waiting.</textarea></label>
+  {% if owing %}<h3 style="margin-top:1.25rem">New deadlines <small class="muted">(leave blank to keep current)</small></h3>
+  <table>{% for x in owing %}<tr><td>{{ x.title }}<br><small>{{ x.d.staff }} · was {{ x.d.due|fmt }}</small></td><td style="width:260px"><input type="datetime-local" name="due_{{ x.id }}"></td></tr>{% endfor %}</table>{% endif %}
+  <label>Check-in date (EAT)<input type="datetime-local" name="check_in" required value="{{ check_in }}"></label>
+  <div class="form-actions"><button class="btn">Send plan to {{ s.first_name }}</button></div>
+</form>
+{% endblock %}

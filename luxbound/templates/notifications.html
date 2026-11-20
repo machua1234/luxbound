@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% set title = 'Notifications' %}
+{% block body %}
+<div class="row" style="justify-content:space-between"><h1>Notifications</h1>
+  <form method="post" action="/notifications/read-all" class="inline">{{ csrf_field() }}<button class="btn sm ghost">Mark all read</button></form></div>
+<p class="sub">Private to you. Each one was also emailed to {{ g.user.email }}.</p>
+<div class="card">
+{% for n in items %}<div class="notif {{ '' if n.read_at else 'unread' }}"><div class="dot"></div><div>
+  <div class="t"><a href="/n/{{ n.id }}">{{ n.title }}</a></div><div class="muted" style="white-space:pre-line">{{ n.body }}</div>
+  <small>{{ n.created_at|fmt }}</small></div></div>
+{% else %}{{ empty('No notifications yet.') }}{% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% set title = 'Assignments' %}
+{% block body %}
+<h1>Assignments & projects</h1><p class="sub">Open one to confirm submission and review status from Squad for {{ 'every student' if g.user.role == 'lead' else 'your students' }}.</p>
+<div class="card">
+{% if rows %}
+<table><tr><th>Item</th><th>Skill</th><th>Deadline</th><th>Submitted</th><th>To verify</th><th>Overdue</th></tr>
+{% for r in rows %}<tr><td><a href="/assignments/{{ r.a.id }}">{{ r.a.title }}</a>{% if r.a.kind == 'project' %} <span class="tag">Project</span>{% endif %}{% if not r.a.required %} <span class="tag">Optional</span>{% endif %}<br><small>{{ r.a.cohort }} · {{ r.a.code }}</small></td>
+  <td>{{ r.a.skill }}</td><td>{{ due(r.a.due_at, at) }}</td><td>{{ bar(r.submitted, r.total) }}<small>{{ r.submitted }}/{{ r.total }}</small></td>
+  <td>{{ r.verify or '' }}</td><td>{{ r.overdue or '' }}</td></tr>{% endfor %}
+</table>
+{% else %}{{ empty('No assignments yet. The cohort lead imports them under Admin.') }}{% endif %}
+</div>
+{% endblock %}

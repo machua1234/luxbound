@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% set title = 'Outbox' %}
+{% block body %}
+<p><a href="/admin">← Admin</a></p><h1>Email outbox</h1><p class="sub">Transport: {{ transport }}.</p>
+{% for m in mails %}<details class="card tight"><summary><b>{{ m.subject }}</b> → {{ m.to_email }} <small class="muted">· {{ m.created_at|fmt }}</small></summary><pre style="white-space:pre-wrap;font:inherit;margin-top:1rem">{{ m.text }}</pre></details>
+{% else %}{{ empty('No emails yet.') }}{% endfor %}
+{% endblock %}

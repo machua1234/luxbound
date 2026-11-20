@@ -1,0 +1,28 @@
+{%- set nav = {
+  'student': [('/progress', 'My Progress'), ('/support', 'Technical Support')],
+  'tutor': [('/queue', 'Tutor Queue'), ('/students', 'Students'), ('/assignments', 'Assignments'), ('/support', 'Tickets')],
+  'lead': [('/overview', 'Cohort Overview'), ('/queue', 'Tutor Queue'), ('/students', 'Students'), ('/assignments', 'Assignments'), ('/support', 'Tickets'), ('/admin', 'Admin')],
+} -%}
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{{ title }}{% endblock %} · LuxDevHQ Progress & Support</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head><body>
+{% if g.user %}
+<header class="top">
+  <a class="brand" href="/"><span class="logo">L</span><span>LuxDevHQ <b>Progress & Support</b></span></a>
+  <nav>{% for href, label in nav[g.user.role] %}<a href="{{ href }}" class="{{ 'on' if active == href }}">{{ label }}</a>{% endfor %}</nav>
+  <div class="me">
+    <a href="/notifications" class="bell {{ 'has' if g.unread }}" title="Notifications">🔔{% if g.unread %}<span>{{ g.unread }}</span>{% endif %}</a>
+    <span class="who">{{ g.user.first_name }} · {{ {'lead': 'Cohort lead', 'tutor': 'Tutor'}.get(g.user.role, 'Student') }}</span>
+    <form method="post" action="/logout">{{ csrf_field() }}<button class="link">Sign out</button></form>
+  </div>
+</header>
+{% endif %}
+<main class="{{ 'bare' if bare }}">
+{% for category, text in get_flashed_messages(with_categories=true) %}<div class="flash {{ category }}">{{ text }}</div>{% endfor %}
+{% block body %}{% endblock %}
+</main>
+{% if g.user %}<footer>Submissions, briefs and recordings stay in Squad. This portal tracks what’s owed, what’s blocking, and who acts next. Times shown in EAT.</footer>{% endif %}
+</body></html>

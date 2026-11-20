@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% set title = 'Students' %}
+{% block body %}
+<h1>Students</h1><p class="sub">{{ 'Everyone in the cohort.' if g.user.role == 'lead' else 'Students assigned to you.' }} Submission and support status are shown side by side.</p>
+<div class="card">
+{% if rows %}
+<table><tr><th>Student</th>{% if g.user.role == 'lead' %}<th>Tutor</th>{% endif %}<th>Completed (due so far)</th><th>Submission status</th><th>Support status</th></tr>
+{% for r in rows %}<tr>
+  <td><a href="/students/{{ r.u.id }}">{{ r.u.first_name }} {{ r.u.last_name }}</a><br><small>{{ r.u.email }}</small></td>
+  {% if g.user.role == 'lead' %}<td>{{ r.u.tutor_first or '—' }}</td>{% endif %}
+  <td>{{ bar(r.done, r.past_due) }}<small>{{ r.done }}/{{ r.past_due }}</small></td>
+  <td>{% if r.overdue %}{{ pill('bad', r.overdue ~ ' overdue') }}{% endif %} {% if r.unchecked %}{{ pill('warn', r.unchecked ~ ' to verify') }}{% endif %} {% if not r.overdue and not r.unchecked %}{{ pill('good', 'On track') }}{% endif %}</td>
+  <td>{% if r.t %}{{ pill('warn' if r.t.waiting else 'info', r.t.n ~ ' open ticket' ~ ('s' if r.t.n > 1 else '')) }}{% else %}<span class="muted">None</span>{% endif %}</td></tr>{% endfor %}
+</table>
+{% else %}{{ empty('No students assigned yet.') }}{% endif %}
+</div>
+{% endblock %}
